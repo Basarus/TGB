@@ -2,12 +2,18 @@ import axios from "axios"
 const cheerio = require('cheerio');
 const iconv = require('iconv-lite');
 const fs = require("fs");
-const url = 'https://www.iamcook.ru/event/everyday/everyday-breakfast'
+const url = 'https://www.iamcook.ru/event/everyday/everyday-'
 
-export function load() {
+function getRandomIntInclusive(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1) + min); // The maximum is inclusive and the minimum is inclusive
+  }
+
+export async function getReceptieForSite(type) {
     const fetchTitles = async () => {
         try {
-            const response = await axios.get(url);
+            const response = await axios.get(url + type);
 
             const html = response.data;
 
@@ -26,13 +32,13 @@ export function load() {
         }
     };
 
-    fetchTitles().then((titles) => {
-        console.log(titles)
-        getRecept(titles[0])
+    return await fetchTitles().then(async (titles) => {
+        let random = getRandomIntInclusive(0, titles.length - 1)
+        return await getRecept(titles[random])
     });
 }
 
-function getRecept(receptUrl) {
+async function getRecept(receptUrl) {
     let url = "https://www.iamcook.ru" + receptUrl
     const fetchTitles = async () => {
         try {
@@ -53,11 +59,14 @@ function getRecept(receptUrl) {
             const $ = cheerio.load(html);
 
             const titles = {
+                name: null,
                 ingredients: [],
                 resultphoto: null,
                 instruction: []
             };
-
+            $('h1').each((_idx, el) => {
+                if (el.attribs.itemprop == 'name') titles.name = $(el).text()
+            });
             $('p').each((_idx, el) => {
                 if (el.attribs.itemprop == 'recipeIngredient') titles.ingredients.push($(el).text())
             });
@@ -75,13 +84,11 @@ function getRecept(receptUrl) {
                         if (text != '') titles.instruction.push(text)
                     }
             });
-            console.log(titles.instruction)
+            return titles
         } catch (error) {
             throw error;
         }
     };
 
-    fetchTitles().then((titles) => {});
+    return await fetchTitles()
 }
-
-load()
