@@ -13,12 +13,15 @@ class Bot {
   commands: Command[] = [];
 
   constructor(private readonly configService: IConfigService) {
+    
     this.bot = new Telegraf<IBotContext>(this.configService.get("TOKEN"));
+   
     this.bot.use(
       new LocalSession({
         database: "sessions.json"
       }).middleware()
     )
+
   }
 
   init() {
@@ -28,6 +31,9 @@ class Bot {
     }
     this.bot.launch()
 
+    this.bot.on('message', (ctx) => {
+       
+    })
   }
 }
 
