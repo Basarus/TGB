@@ -1,11 +1,13 @@
 import { Telegraf } from "telegraf";
-import { IConfigService } from "./config/config.interface";
-import { ConfigService } from "./config/config.service";
-import { IBotContext } from "./context/context.interface";
-import { Command } from "./commands/command.class";
-import { StartCommand } from "./commands/start.command";
+import { IConfigService } from "./config/config.interface.js";
+import { ConfigService } from "./config/config.service.js";
+import { IBotContext } from "./context/context.interface.js";
+import { Command } from "./commands/command.class.js";
+import { StartCommand } from "./commands/start.command.js";
 import LocalSession from "telegraf-session-local";
-import "./findFood/findFood";
+import './database/index.js'
+import { parseRecepts } from "./parserFood/index.js";
+import './schedule/index.js';
 
 class Bot {
 
@@ -24,19 +26,17 @@ class Bot {
 
   }
 
-  init() {
+ async init() {
     this.commands = [new StartCommand(this.bot)]
     for (const command of this.commands) {
       command.handle()
     }
     this.bot.launch()
 
-    this.bot.on('message', (ctx) => {
-       
-    })
+    // parseRecepts()
   }
 }
 
-const bot = new Bot(new ConfigService())
+export const bot = new Bot(new ConfigService())
 bot.init()
 

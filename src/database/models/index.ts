@@ -1,0 +1,1 @@
+import "./recepts.model.js";

@@ -1,6 +1,9 @@
-import { IBotContext } from "../context/context.interface";
-import { getReceptieForSite } from "../findFood/findFood";
-import { Command } from "./command.class";
+import { IBotContext } from "../context/context.interface.js";
+import sequlize from "../database/database.js";
+import { getReceptiesForSite } from "../findFood/findFood.js";
+import { findFood } from "../findFood/index.js";
+import { parseRecepts } from "../parserFood/index.js";
+import { Command } from "./command.class.js";
 import { Markup, Telegraf } from 'telegraf'
 
 function sleep(ms) {
@@ -15,59 +18,45 @@ export class StartCommand extends Command {
 
     async findFood(ctx, type) {
         ctx.deleteMessage()
-        let receptie = await getReceptieForSite(type);
-        await ctx.sendMessage(receptie.name)
-        await ctx.sendPhoto(receptie.resultphoto)
-        await ctx.sendMessage(receptie.ingredients.join('\n'))
-        for (let e of receptie.instruction) {
-            if (e == ' ') continue;
-            await sleep(200)
-            if (e.indexOf('img') != -1) await ctx.sendPhoto(e)
-            else await ctx.sendMessage(e)
-        }
-        this.start()
+        let receptie = await getReceptiesForSite(type);
+        await ctx.telegram.sendMessage('@my_world_foodlover', receptie.name)
+        if (receptie.discription) await ctx.telegram.sendMessage('@my_world_foodlover', receptie.discription)
+        await ctx.telegram.sendPhoto('@my_world_foodlover', receptie.resultphoto)
+        await ctx.telegram.sendMessage('@my_world_foodlover', receptie.ingredients.join('\n'))
+        if (receptie.code != null) await ctx.telegram.sendMessage('@my_world_foodlover', `Полный рецепт (и многие другие) Вы можете получить у нашего бота @food1over_bot по коду ${receptie.code}`)
     }
 
     start(){
-        this.bot.start((ctx) => {
+        this.bot.start(async (ctx) => {
             ctx.reply("Здравствуйте!", Markup.inlineKeyboard([
-                Markup.button.callback("Категории", "get_category"),
+                Markup.button.callback("Категории", "categories"),
                 Markup.button.callback("Получить случайный рецепт", "get_random_recept"),
             ]))
         }) 
     }
 
 
-    handle(): void {
+   async handle() {
        this.start()
 
 
-        this.bot.action('get_category', (ctx) => {
+        this.bot.action('categories', (ctx) => {
             ctx.deleteMessage()
             ctx.reply("Выберите категорию", Markup.inlineKeyboard([
-                Markup.button.callback("Время суток", "time_of_day")
+                Markup.button.callback("Выпечка", "vjpechka"),
+                Markup.button.callback("Супы", "supj"),
+                Markup.button.callback("Второе блюдо", "vtoroe-bludo")
             ]))
         })
 
-
-        this.bot.action("time_of_day", (ctx) => {
-            ctx.deleteMessage()
-            ctx.reply("Выберите категорию", Markup.inlineKeyboard([
-                Markup.button.callback("Утро", "utro"),
-                Markup.button.callback("День", "day"),
-                Markup.button.callback("Вечер", "vecher")
-            ]))
+        this.bot.action("vjpechka", async (ctx) => {
+            this.findFood(ctx, 'vjpechka')
         })
-
-
-        this.bot.action("utro", async (ctx) => {
-            this.findFood(ctx, 'breakfast')
+        this.bot.action("supj", async (ctx) => {
+            this.findFood(ctx, 'supj')
         })
-        this.bot.action("day", async (ctx) => {
-            this.findFood(ctx, 'lunch')
-        })
-        this.bot.action("vecher", async (ctx) => {
-            this.findFood(ctx, 'dinner')
+        this.bot.action("vtoroe-bludo", async (ctx) => {
+            this.findFood(ctx, 'vtoroe-bludo')
         })
     }
 }

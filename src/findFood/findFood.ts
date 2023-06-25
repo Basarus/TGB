@@ -1,94 +1,117 @@
 import axios from "axios"
-const cheerio = require('cheerio');
-const iconv = require('iconv-lite');
-const fs = require("fs");
-const url = 'https://www.iamcook.ru/event/everyday/everyday-'
+import cheerio from 'cheerio';
+import iconv from 'iconv-lite';
+import { getMaxPage, getListUrlRecepts, getHTML } from "../utils/index.js";
+import sequlize from "../database/database.js";
+
+const url = 'https://1000.menu/catalog'
 
 function getRandomIntInclusive(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1) + min); // The maximum is inclusive and the minimum is inclusive
-  }
-
-export async function getReceptieForSite(type) {
-    const fetchTitles = async () => {
-        try {
-            const response = await axios.get(url + type);
-
-            const html = response.data;
-
-            const $ = cheerio.load(html);
-
-            const titles = [];
-
-            $('a').each((_idx, el) => {
-                const title = $(el).attr('href')
-                if (title.indexOf('showrecipe') != -1) titles.push(title)
-            });
-
-            return titles;
-        } catch (error) {
-            throw error;
-        }
-    };
-
-    return await fetchTitles().then(async (titles) => {
-        let random = getRandomIntInclusive(0, titles.length - 1)
-        return await getRecept(titles[random])
-    });
 }
 
-async function getRecept(receptUrl) {
-    let url = "https://www.iamcook.ru" + receptUrl
+
+export async function getReceptiesForSite(type) {
+    let urlPage = url + '/' + type;
+    let maxPages = await getMaxPage(urlPage);
+    let randomPage = getRandomIntInclusive(1, maxPages - 1);
+    let listRecepts = await getListUrlRecepts(urlPage + '/' + randomPage);
+    let random = getRandomIntInclusive(0, listRecepts.length - 1)
+    return await getShortRecept(listRecepts[random], type)
+
+}
+
+async function getShortRecept(receptUrl, type) {
+    let url = "https://1000.menu" + '/cooking/' + receptUrl
     const fetchTitles = async () => {
         try {
-            
-            const res = await fetch(url);
-              
-              const charset = (res.headers.get('content-type') ?? '')
-                .split(/\s*;\s*/).find(
-                  (/** @type {string} */ x) => x.startsWith('charset')
-                )?.replace(/charset=/, '');
-              
-              const buf = await res.arrayBuffer();
-              const html = iconv.decode(
-                Buffer.from(buf),
-                charset || 'windows-1251'
-              );
-
+            const html = await getHTML(url)
             const $ = cheerio.load(html);
-
-            const titles = {
+            const recept = {
+                code: null,
                 name: null,
+                discription: null,
                 ingredients: [],
                 resultphoto: null,
                 instruction: []
             };
+
+            let databaseData = (await sequlize.models.recepts.findOne(
+                {
+                    where: {
+                        src: url.replace('https://1000.menu/cooking/', '')
+                    }
+                }
+            )).dataValues
+            if (databaseData.id) recept.code = databaseData.id
             $('h1').each((_idx, el) => {
-                if (el.attribs.itemprop == 'name') titles.name = $(el).text()
+                if (el.attribs.itemprop == 'name') recept.name = $(el).text()
             });
-            $('p').each((_idx, el) => {
-                if (el.attribs.itemprop == 'recipeIngredient') titles.ingredients.push($(el).text())
+            $('h1').each((_idx, el) => {
+                if (el.attribs.itemprop == 'description') recept.discription = $(el).text()
+            });
+            $('meta').each((_idx, el) => {
+                if (el.attribs.itemprop == 'recipeIngredient') recept.ingredients.push(el.attribs.content)
             });
             $('img').each((_idx, el) => {
-              if (el.attribs.class == 'resultphoto') titles.resultphoto = el.attribs.src.replace('//', '')
-               
+                if (el.attribs.class == 'result-photo bl photo') recept.resultphoto = el.attribs.src.replace('//', '')
+
             });
-            $('div[class="instructions"]').find('p').each((_idx, el) => {
-                    if (el.children[0]?.attribs?.src){ 
-                        let src = el.children[0]?.attribs?.src.replace('//', '')
-                        titles.instruction.push(src)
-                    }
-                    else {
-                        let text = $(el).text().replace(/[\n\t\r]/g,"")
-                        if (text != '') titles.instruction.push(text)
-                    }
+            $('a[class="step-img foto_gallery"]').each((_idx, el) => {
+                if (el.attribs.href) {
+                    let img = el.attribs.href.replace('//', '')
+                    recept.instruction.push(img)
+                }
+                if (el.attribs.title) recept.instruction.push(el.attribs.title)
             });
-            return titles
+            if (recept.instruction.length <= 0) return await getReceptiesForSite(type)
+            return recept
         } catch (error) {
-            throw error;
+            return null
         }
     };
 
     return await fetchTitles()
+}
+
+async function getFullRecept(receptUrl, type) {
+    try {
+        const html = await getHTML(url)
+        const $ = cheerio.load(html);
+        const recept = {
+            code: null,
+            name: null,
+            discription: null,
+            ingredients: [],
+            resultphoto: null,
+            instruction: []
+        };
+
+        $('h1').each((_idx, el) => {
+            if (el.attribs.itemprop == 'name') recept.name = $(el).text()
+        });
+        $('h1').each((_idx, el) => {
+            if (el.attribs.itemprop == 'description') recept.discription = $(el).text()
+        });
+        $('meta').each((_idx, el) => {
+            if (el.attribs.itemprop == 'recipeIngredient') recept.ingredients.push(el.attribs.content)
+        });
+        $('img').each((_idx, el) => {
+            if (el.attribs.class == 'result-photo bl photo') recept.resultphoto = el.attribs.src.replace('//', '')
+
+        });
+        $('a[class="step-img foto_gallery"]').each((_idx, el) => {
+            if (el.attribs.href) {
+                let img = el.attribs.href.replace('//', '')
+                recept.instruction.push(img)
+            }
+            if (el.attribs.title) recept.instruction.push(el.attribs.title)
+        });
+        if (recept.instruction.length <= 0) return await getReceptiesForSite(type)
+        return recept
+    } catch(err){
+        return null;
+    }
 }
