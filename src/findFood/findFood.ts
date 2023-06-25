@@ -76,11 +76,24 @@ async function getShortRecept(receptUrl, type) {
     return await fetchTitles()
 }
 
-async function getFullRecept(receptUrl, type) {
+export async function findFoodById(code) {
+    let databaseData = (await sequlize.models.recepts.findOne(
+        {
+            where: {
+                id: code
+            }
+        }
+    )).dataValues
+    console.log(databaseData)
+    if (databaseData == undefined) return null;
+    else return await getFullRecept("https://1000.menu/cooking/" + databaseData.src)
+}
+
+async function getFullRecept(receptUrl) {
     try {
-        const html = await getHTML(url)
+        const html = await getHTML(receptUrl)
         const $ = cheerio.load(html);
-        const recept = {
+        let recept = {
             code: null,
             name: null,
             discription: null,
@@ -88,7 +101,6 @@ async function getFullRecept(receptUrl, type) {
             resultphoto: null,
             instruction: []
         };
-
         $('h1').each((_idx, el) => {
             if (el.attribs.itemprop == 'name') recept.name = $(el).text()
         });
@@ -109,7 +121,7 @@ async function getFullRecept(receptUrl, type) {
             }
             if (el.attribs.title) recept.instruction.push(el.attribs.title)
         });
-        if (recept.instruction.length <= 0) return await getReceptiesForSite(type)
+        if (recept.instruction.length <= 0) return null;
         return recept
     } catch(err){
         return null;

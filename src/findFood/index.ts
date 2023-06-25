@@ -1,14 +1,26 @@
 import { bot } from "../app.js";
 import { encodindString } from "../utils/index.js";
-import { getReceptiesForSite } from "./findFood.js";
+import { getReceptiesForSite, findFoodById} from "./findFood.js";
 
 export async function findFood(type) {
-    let text = "Полный рецепт (и многие другие) Вы мож ете получить у нашего бота @food1over_bot по коду"
-    console.log(text)
-    // const receptie = await getReceptiesForSite(type);
-    // await bot?.bot.telegram?.sendMessage('@my_world_foodlover', receptie.name)
-    // if (receptie.discription) await bot?.bot.telegram?.sendMessage('@my_world_foodlover', receptie.discription)
-    // await bot?.bot.telegram?.sendPhoto('@my_world_foodlover', receptie.resultphoto)
-    // await bot?.bot.telegram?.sendMessage('@my_world_foodlover', receptie.ingredients.join('\n'))
-    // if (receptie.code != null) await bot?.bot.telegram?.sendMessage('@my_world_foodlover', text)
+    const receptie = await getReceptiesForSite(type);
+    let text = `РџРѕР»РЅС‹Р№ СЂРµС†РµРїС‚ (Р° С‚Р°Рє Р¶Рµ РјРЅРѕРіРёРµ РґСЂСѓРіРёРµ) РґРѕСЃС‚СѓРїРµРЅ РїРѕ РєРѕРґСѓ ${receptie.code} \n Сѓ Р±РѕС‚Р° @food1over_bot`
+    await bot?.bot.telegram?.sendMessage('@my_world_foodlover', receptie.name)
+    if (receptie.discription) await bot?.bot.telegram?.sendMessage('@my_world_foodlover', receptie.discription)
+    await bot?.bot.telegram?.sendPhoto('@my_world_foodlover', receptie.resultphoto)
+    await bot?.bot.telegram?.sendMessage('@my_world_foodlover', receptie.ingredients.join('\n'))
+    if (receptie.code != null) await bot?.bot.telegram?.sendMessage('@my_world_foodlover', text)
+}
+
+export async function getFoodByCode(ctx, code) {
+    let receptie = await findFoodById(code);
+    if (receptie == null) return;
+    await ctx.sendMessage(receptie.name)
+    if (receptie.discription) await ctx.sendMessage(receptie.discription)
+    await ctx.sendPhoto(receptie.resultphoto)
+    await ctx.sendMessage(receptie.ingredients.join('\n'))
+    for (let instruction of receptie.instruction){
+        if (instruction.indexOf('img') != -1) await ctx.sendPhoto(instruction)
+        else await ctx.sendMessage(instruction)
+    }
 }
