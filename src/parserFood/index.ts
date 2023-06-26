@@ -5,7 +5,7 @@ import * as CONFIG from './config.js';
 const basicUrl = 'https://1000.menu/catalog'
 
 export async function parseRecepts() {
-    sequlize.models.recepts.truncate({ cascade: true, restartIdentity: true });
+   // sequlize.models.recepts.truncate({ cascade: true, restartIdentity: true });
 
     for (let category of CONFIG.CATEGORY) {
         const maxPage = await getMaxPage(basicUrl + '/' + category)

@@ -20,7 +20,6 @@ export async function getReceptiesForSite(type) {
     let listRecepts = await getListUrlRecepts(urlPage + '/' + randomPage);
     let random = getRandomIntInclusive(0, listRecepts.length - 1)
     return await getShortRecept(listRecepts[random], type)
-
 }
 
 async function getShortRecept(receptUrl, type) {
@@ -31,6 +30,13 @@ async function getShortRecept(receptUrl, type) {
             const $ = cheerio.load(html);
             const recept = {
                 code: null,
+                time: null,
+                colories: {
+                    colories: null,
+                    fate: null,
+                    ugl: null,
+                    belk: null
+                },
                 name: null,
                 discription: null,
                 ingredients: [],
@@ -49,15 +55,30 @@ async function getShortRecept(receptUrl, type) {
             $('h1').each((_idx, el) => {
                 if (el.attribs.itemprop == 'name') recept.name = $(el).text()
             });
-            $('h1').each((_idx, el) => {
-                if (el.attribs.itemprop == 'description') recept.discription = $(el).text()
+            $('div[class="description is-citation"]').each((_idx, el) => {
+             recept.discription = $(el).text()
+            });
+            $('span[class="label"]').each((_idx, el) => {
+                let text = $(el).text()
+                if (text.indexOf('Время приготовления: ') != -1) recept.time = $(el).text()
+            });
+            $('span[id="nutr_p"]').each((_idx, el) => {
+                recept.colories.belk = $(el).text()
+            });
+            $('span[id="nutr_f"]').each((_idx, el) => {
+                recept.colories.fate = $(el).text()
+            });
+            $('span[id="nutr_c"]').each((_idx, el) => {
+                recept.colories.ugl = $(el).text()
+            });
+            $('span[id="nutr_kcal"]').each((_idx, el) => {
+                recept.colories.colories = $(el).text()
             });
             $('meta').each((_idx, el) => {
-                if (el.attribs.itemprop == 'recipeIngredient') recept.ingredients.push(el.attribs.content)
+                if (el.attribs.itemprop == 'recipeIngredient') recept.ingredients.push('- ' + el.attribs.content)
             });
             $('img').each((_idx, el) => {
                 if (el.attribs.class == 'result-photo bl photo') recept.resultphoto = el.attribs.src.replace('//', '')
-
             });
             $('a[class="step-img foto_gallery"]').each((_idx, el) => {
                 if (el.attribs.href) {
@@ -84,35 +105,67 @@ export async function findFoodById(code) {
             }
         }
     )).dataValues
-    console.log(databaseData)
     if (databaseData == undefined) return null;
     else return await getFullRecept("https://1000.menu/cooking/" + databaseData.src)
 }
 
-async function getFullRecept(receptUrl) {
+export async function getFullReceptiesForSite(type) {
+    let urlPage = url + '/' + type;
+    let maxPages = await getMaxPage(urlPage);
+    let randomPage = getRandomIntInclusive(1, maxPages - 1);
+    let listRecepts = await getListUrlRecepts(urlPage + '/' + randomPage);
+    let random = getRandomIntInclusive(0, listRecepts.length - 1)
+    return await getFullRecept("https://1000.menu/cooking/" + listRecepts[random])
+}
+
+export async function getFullRecept(receptUrl) {
+
     try {
         const html = await getHTML(receptUrl)
         const $ = cheerio.load(html);
-        let recept = {
+        const recept = {
             code: null,
-            name: null,
+            time: null,
+            colories: {
+                colories: null,
+                fate: null,
+                ugl: null,
+                belk: null
+            },
+            name: null, 
             discription: null,
             ingredients: [],
             resultphoto: null,
             instruction: []
         };
+
         $('h1').each((_idx, el) => {
             if (el.attribs.itemprop == 'name') recept.name = $(el).text()
         });
-        $('h1').each((_idx, el) => {
-            if (el.attribs.itemprop == 'description') recept.discription = $(el).text()
+        $('div[class="description is-citation"]').each((_idx, el) => {
+         recept.discription = $(el).text()
+        });
+        $('span[class="label"]').each((_idx, el) => {
+            let text = $(el).text()
+            if (text.indexOf('Время приготовления: ') != -1) recept.time = $(el).text()
+        });
+        $('span[id="nutr_p"]').each((_idx, el) => {
+            recept.colories.belk = $(el).text()
+        });
+        $('span[id="nutr_f"]').each((_idx, el) => {
+            recept.colories.fate = $(el).text()
+        });
+        $('span[id="nutr_c"]').each((_idx, el) => {
+            recept.colories.ugl = $(el).text()
+        });
+        $('span[id="nutr_kcal"]').each((_idx, el) => {
+            recept.colories.colories = $(el).text()
         });
         $('meta').each((_idx, el) => {
-            if (el.attribs.itemprop == 'recipeIngredient') recept.ingredients.push(el.attribs.content)
+            if (el.attribs.itemprop == 'recipeIngredient') recept.ingredients.push('- ' + el.attribs.content)
         });
         $('img').each((_idx, el) => {
             if (el.attribs.class == 'result-photo bl photo') recept.resultphoto = el.attribs.src.replace('//', '')
-
         });
         $('a[class="step-img foto_gallery"]').each((_idx, el) => {
             if (el.attribs.href) {
@@ -123,7 +176,8 @@ async function getFullRecept(receptUrl) {
         });
         if (recept.instruction.length <= 0) return null;
         return recept
-    } catch(err){
+    } catch (err) {
+        console.log(err)
         return null;
     }
 }

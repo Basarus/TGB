@@ -40,23 +40,23 @@ export class StartCommand extends Command {
        this.start()
 
 
-        this.bot.action('categories', (ctx) => {
-            ctx.deleteMessage()
-            ctx.reply("Выберите категорию", Markup.inlineKeyboard([
-                Markup.button.callback("Выпечка", "vjpechka"),
-                Markup.button.callback("Супы", "supj"),
-                Markup.button.callback("Второе блюдо", "vtoroe-bludo")
-            ]))
-        })
+        // this.bot.action('categories', (ctx) => {
+        //     ctx.deleteMessage()
+        //     ctx.reply("Выберите категорию", Markup.inlineKeyboard([
+        //         Markup.button.callback("Выпечка", "vjpechka"),
+        //         Markup.button.callback("Супы", "supj"),
+        //         Markup.button.callback("Второе блюдо", "vtoroe-bludo")
+        //     ]))
+        // })
 
-        this.bot.action("vjpechka", async (ctx) => {
-            this.findFood(ctx, 'vjpechka')
-        })
-        this.bot.action("supj", async (ctx) => {
-            this.findFood(ctx, 'supj')
-        })
-        this.bot.action("vtoroe-bludo", async (ctx) => {
-            this.findFood(ctx, 'vtoroe-bludo')
-        })
+        // this.bot.action("vjpechka", async (ctx) => {
+        //     this.findFood(ctx, 'vjpechka')
+        // })
+        // this.bot.action("supj", async (ctx) => {
+        //     this.findFood(ctx, 'supj')
+        // })
+        // this.bot.action("vtoroe-bludo", async (ctx) => {
+        //     this.findFood(ctx, 'vtoroe-bludo')
+        // })
     }
 }

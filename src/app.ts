@@ -9,6 +9,7 @@ import './database/index.js'
 import { parseRecepts } from "./parserFood/index.js";
 import './schedule/index.js';
 import { getFoodByCode } from "./findFood/index.js";
+import { loadMenu } from "./menu/index.js";
 
 let locker = new Set()
 
@@ -42,7 +43,7 @@ class Bot {
 
 export const bot = new Bot(new ConfigService())
 bot.init()
-
+loadMenu()
 
 bot.bot.command('code', async (ctx) => {
   if (locker.has(ctx.message.from.id)) return console.log('Подождите!')
