@@ -27,7 +27,7 @@ export async function findFood(type) {
 
 export async function getFoodByCode(ctx, code) {
     let receptie = await findFoodById(code);
-    if (receptie == null) return;
+    if (receptie == null) return ctx.sendMessage('Ошибка!\nБлюдо не найдено');
     await ctx.sendMessage(
         `${receptie.name}\n\nНутриенты и энергетическая ценность состава рецепта:\n- Калорий: ${receptie.colories.colories} ккал\n- Углеводы: ${receptie.colories.ugl} г\n- Белки: ${receptie.colories.belk} г\n- Жиры:  ${receptie.colories.fate} г\n\n⏲️ ${receptie.time}\n\nИнгредиенты:\n${receptie.ingredients.join('\n')}\n
         ${getHiddenLink(receptie.resultphoto, "HTML")}\n

@@ -4,8 +4,10 @@ import { CATEGORY } from "./config.js";
 import { getFoodByCode, getFoodByCodeFromUser, getFullFoodRecept } from "../findFood/index.js";
 import { getFullReceptiesForSite } from "../findFood/findFood.js";
 import { getRandomIntInclusive } from "../utils/index.js";
+import { isUserAuth } from "../auth/index.js";
 
 const locker = new Set()
+
 
 export function loadMenu() {
     bot.bot.command('categories', (ctx) => {
@@ -99,6 +101,7 @@ export function loadMenu() {
     })
 
     bot.bot.on('callback_query', async function (msg) {
+        if (!(await isUserAuth(msg.update.callback_query.from.id))) return;
         if (msg.update.callback_query.data.indexOf('getReceptCode') == -1) return;
         let [event, _code] = msg.update.callback_query.data.split('_');
         let code = parseInt(_code)

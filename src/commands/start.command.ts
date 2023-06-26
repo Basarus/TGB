@@ -1,3 +1,4 @@
+import { createUser, getUserById } from "../auth/index.js";
 import { IBotContext } from "../context/context.interface.js";
 import sequlize from "../database/database.js";
 import { getReceptiesForSite } from "../findFood/findFood.js";
@@ -28,10 +29,11 @@ export class StartCommand extends Command {
 
     start(){
         this.bot.start(async (ctx) => {
-            ctx.reply("Здравствуйте!", Markup.inlineKeyboard([
-                Markup.button.callback("Категории", "categories"),
-                Markup.button.callback("Получить случайный рецепт", "get_random_recept"),
-            ]))
+            await ctx.sendMessage(
+                `Приветствуем Вас в нашем боте!\nВоспользуйтесь меню для получения рецептов
+            `)
+            if (await getUserById(ctx.message.from.id)) return
+            await createUser(ctx.message.from.id);
         }) 
     }
 

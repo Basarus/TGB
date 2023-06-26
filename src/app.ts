@@ -10,6 +10,7 @@ import { parseRecepts } from "./parserFood/index.js";
 import './schedule/index.js';
 import { getFoodByCode } from "./findFood/index.js";
 import { loadMenu } from "./menu/index.js";
+import './auth/index.js';
 
 let locker = new Set()
 
@@ -49,7 +50,7 @@ bot.bot.command('code', async (ctx) => {
   if (locker.has(ctx.message.from.id)) return console.log('Подождите!')
   let [command, _code] = ctx.message.text.split(' ');
   let code = parseInt(_code)
-  if (!code || isNaN(code)) return console.log('Ошибка!') 
+  if (!code || isNaN(code)) return ctx.sendMessage('Ошибка!\nИспользуйте форму: /code "код блюда"')
   locker.add(ctx.message.from.id)
   await getFoodByCode(ctx, code)
   locker.delete(ctx.message.from.id)
