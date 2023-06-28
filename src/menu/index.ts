@@ -103,6 +103,7 @@ export function loadMenu() {
     bot.bot.on('callback_query', async function (msg) {
         if (!(await isUserAuth(msg.update.callback_query.from.id))) return;
         if (msg.update.callback_query.data.indexOf('getReceptCode') == -1) return;
+        // @ts-ignore
         let [event, _code] = msg.update.callback_query.data.split('_');
         let code = parseInt(_code)
         if (!code || isNaN(code)) return console.log('Ошибка!')
