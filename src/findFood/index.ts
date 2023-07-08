@@ -10,7 +10,7 @@ function sleep(ms) {
 export async function findFood(type, count = 0) {
     if (count > 3) return;
     const receptie = await getReceptiesForSite(type);
-    if (!receptie.code) return findFood(type, count + 1)
+    if (receptie?.code == undefined) return findFood(type, count + 1)
     let text = `Полный рецепт (а так же многие другие) доступен по коду ${receptie.code} \n у бота @food1over_bot`
     await bot?.bot.telegram?.sendMessage('@my_world_foodlover',
         `${receptie.name}\n\nНутриенты и энергетическая ценность состава рецепта:\n- Калорий: ${receptie.colories.colories} ккал\n- Углеводы: ${receptie.colories.ugl} г\n- Белки: ${receptie.colories.belk} г\n- Жиры:  ${receptie.colories.fate} г\n\n⏲️ ${receptie.time}\n\nИнгредиенты:\n${receptie.ingredients.join('\n')}\n\n${text}\n
