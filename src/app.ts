@@ -38,7 +38,7 @@ class Bot {
     }
     this.bot.launch()
 
-     parseRecepts()
+     // parseRecepts()
   }
 }
 
