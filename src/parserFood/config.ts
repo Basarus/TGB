@@ -49,6 +49,6 @@ export const CATEGORY = [
      'sousj',
      'desert',
      'krupa-i-krupyanje-izdeliya',
-     'bjstro-i-vkusno'
+     'bjstro-i-vkusno',
      "na-zavtrak"
 ]
